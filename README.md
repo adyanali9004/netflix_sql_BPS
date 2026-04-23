@@ -78,6 +78,137 @@ WHERE rank = 1;
 ```sql
 select show_id, title from netflix where release_year=2000 and s_type='Movie'
 ```
+**Objective:** Retrieve all movies released in a specific year.
+### 4. Find the Top 5 Countries with the Most Content on Netflix
+
+```sql
+select trim(unnest(string_to_array(country,','))) as new_country , 
+count(show_id) as total_content from netflix
+group by new_country 
+order by total_content desc limit 5
+```
+
+**Objective:** Identify the top 5 countries with the highest number of content items.
+
+### 5. Identify the Longest Movie
+
+```sql
+select show_id, duration from netflix
+where s_type='Movie' 
+and 
+duration=(select max(duration) from netflix);
+```
+
+**Objective:** Find the movie with the longest duration.
+
+### 6. Find Content Added in the Last 5 Years
+
+```sql
+select show_id,TO_date(date_added,'Month DD,YYYY') as added_date from netflix
+where TO_date(date_added,'Month DD,YYYY')>current_date- INTERVAL '8 years';
+```
+**Objective:** Retrieve content added to Netflix in the last 5 years.
+
+### 7. Find All Movies/TV Shows by Director 'Rajiv Chilaka'
+
+```sql
+select show_id,title,s_type, director from netflix where director ilike '%Rajiv Chilaka%';
+```
+
+**Objective:** List all content directed by 'Rajiv Chilaka'.
+### 8. List All TV Shows with More Than 5 Seasons
+
+```sql
+select *, SPLIT_PART(duration, ' ',1) as seasons 
+from netflix where 
+s_type='TV Show' and
+ SPLIT_PART(duration, ' ',1)::int>5;
+```
+
+**Objective:** Identify TV shows with more than 5 seasons.
+
+### 9. Count the Number of Content Items in Each Genre
+
+```sql
+select  trim(unnest(string_to_array(listed_in,','))) as genre, 
+count(*)  from netflix group by 
+1 order by count desc;
+```
+
+**Objective:** Count the number of content items in each genre.
+
+### 10.Find each year and the average numbers of content release in India on netflix. 
+return top 5 year with highest avg content release!
+
+```sql
+select extract(year from to_date(date_added,'Month DD YYYY'))as date, 
+count(show_id)as no_of_releases,
+round(count(*)::numeric/(select count(*) 
+           from netflix where country= 'India')::numeric *100,2) as avg_count 
+from netflix 
+where country= 'India' 
+group by 1 order by 2 desc limit 5;
+```
+
+**Objective:** Calculate and rank years by the average number of content releases by India.
+
+### 11. List All Movies that are Documentaries
+
+```sql
+select show_id,s_type,listed_in from netflix  
+where s_type='Movie' and 
+listed_in ilike '%Documentaries%';
+```
+
+**Objective:** Retrieve all movies classified as documentaries.
+
+### 12. Find All Content Without a Director
+
+```sql
+select * from netflix where director is null;
+```
+
+**Objective:** List content that does not have a director.
+
+### 13. Find How Many Movies Actor 'Salman Khan' Appeared in the Last 10 Years
+
+```sql
+select show_id, title,s_cast from netflix 
+where s_cast ilike '%salman khan%' and
+extract(year from to_date(date_added,'Month DD,YYYY'))>(extract(year from current_date)-10);
+```
+
+**Objective:** Count the number of movies featuring 'Salman Khan' in the last 10 years.
+
+### 14. Find the Top 10 Actors Who Have Appeared in the Highest Number of Movies Produced in India
+
+```sql
+select 
+trim(unnest(string_to_array(s_cast,','))) as actor,
+count(*) as total_count 
+from netflix  where country ilike '%India%'
+group by 1 order by 2 desc limit 10;
+```
+
+**Objective:** Identify the top 10 actors with the most appearances in Indian-produced movies.
+
+### 15. Categorize Content Based on the Presence of 'Kill' and 'Violence' Keywords
+
+```sql
+with new_table as 
+(
+select *, case when descriptions ilike 'kill' or 
+descriptions ilike '%Violence%'
+then 'Bad_content'
+else 'Good_content'
+end category
+from netflix
+)
+select category, count(*)
+ from new_table group by category;
+```
+
+**Objective:** Categorize content as 'Bad' if it contains 'kill' or 'violence' and 'Good' otherwise. Count the number of items in each category.
 ## Findings and Conclusion
 
 - **Content Distribution:** The dataset contains a diverse range of movies and TV shows with varying ratings and genres.
